@@ -3,7 +3,7 @@ from collections import defaultdict
 import pickle
 
 class Splitter:
-    def __init__(self, k_splits:int=10, verbose=True, seed=None):
+    def __init__(self, k_splits:int=10, verbose=True, seed=None, test_unique=False):
         """
         Class to load and split into training and testing into k_splits folds.
         Can save state and add more data later.
@@ -28,9 +28,12 @@ class Splitter:
         # dont forget to optimize the seed ;D
         self.seed = seed
         self.rng = np.random.default_rng(seed = self.seed)
+        
+        # test for unique items, good for texts and strings, bad for arrays
+        self.test_unique = test_unique
     
     def add(self, item):
-        if item not in self.processed:
+        if item not in self.processed or not self.test_unique:
             # reduce probability for splits with more data
             distribution = ((sum(self.split_lengths) + 1) / (self.split_lengths + 1)) / self.k_splits
             probabilities = distribution / sum(distribution)
@@ -43,8 +46,9 @@ class Splitter:
             
             # update the split_lengths
             self.split_lengths[split] += 1
-
-            self.processed.append(item)
+            
+            if self.test_unique:
+                self.processed.append(item)
 
         else:
             if self.verbose:
